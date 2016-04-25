@@ -1,0 +1,16 @@
+{
+	"name": "ecodev/postfinance-service",
+	"type": "typo3-cms-extension",
+	"description": "Postfinance B2B service",
+	"homepage": "https://github.com/Ecodev/postfinance_service",
+	"license": ["GPL-2.0+"],
+	"autoload": {
+		"psr-4": {
+			"Ecodev\\PostfinanceService\\": "Classes/"
+		}
+	},
+	"replace": {
+		"postfinance_service": "self.version",
+		"typo3-ter/postfinance_service": "self.version"
+	}
+}
