@@ -11,6 +11,6 @@
 	},
 	"replace": {
 		"postfinance_service": "self.version",
-		"typo3-ter/postfinance_service": "self.version"
+		"typo3-ter/postfinance-service": "self.version"
 	}
 }
