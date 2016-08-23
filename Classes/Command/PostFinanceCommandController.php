@@ -51,7 +51,7 @@ class PostFinanceCommandController extends CommandController
      * @param string $secretFile
      * @throws \InvalidArgumentException
      */
-    public function listInvoicesCommand($secretFile = '.secret/development')
+    public function listCommand($secretFile = '.secret/development')
     {
         $action = 'GetInvoiceListPayer';
 
@@ -119,15 +119,14 @@ class PostFinanceCommandController extends CommandController
                 }
             }
 
+            $path = $basePath . '/*.pdf';
+            $files = glob($path);
+            $numberOfFiles = count($files);
 
-            if ($notificationEmail) {
+            if ($notificationEmail && $numberOfFiles > 0) {
 
                 /** @var Message $message */
                 $message = $this->objectManager->get(Message::class);
-
-                $path = $basePath . '/*.pdf';
-                $files = glob($path);
-                $numberOfFiles = count($files);
 
                 $subject = sprintf('Nouveau lot de factures téléchargés (%s)', $numberOfFiles);
                 $body = sprintf(
