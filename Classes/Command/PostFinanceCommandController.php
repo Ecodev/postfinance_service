@@ -139,15 +139,16 @@ class PostFinanceCommandController extends CommandController
             $files = glob($path);
             $numberOfFiles = count($files);
 
-
             $recipients = GeneralUtility::trimExplode('/', $notificationEmail, true);
             if ($recipients && $numberOfFiles > 0) {
 
                 $subject = sprintf('Nouveau lot de factures téléchargés (%s)', $numberOfFiles);
                 $body = sprintf(
-                    "Nombre de factures téléchargés %s dans le dossier %s/ \n\nCeci est un message automatique.",
+                    "Nombre de factures téléchargés %s dans le dossier %s/ \n\n%s%s",
                     $numberOfFiles,
-                    $basePath
+                    $basePath,
+                    $files ? "\n    * " : '',
+                    implode("\n    * ", $files)
                 );
                 foreach ($recipients as $recipient) {
                     $this->sendNotification($subject, $body, $recipient);
