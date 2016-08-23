@@ -44,7 +44,6 @@ class PostFinanceCommandController extends CommandController
         }
     }
 
-
     /**
      * Get the list of invoices
      *
@@ -82,8 +81,6 @@ class PostFinanceCommandController extends CommandController
      */
     public function downloadCommand($secretFile = '.secret/development', $notificationEmail = '')
     {
-
-
         $action = 'GetInvoiceListPayer';
 
         $secret = parse_ini_file($secretFile);
@@ -91,6 +88,12 @@ class PostFinanceCommandController extends CommandController
             ->setUsername($secret['username'])
             ->setPassword($secret['password'])
             ->getClientFor($action);
+
+        $downloadAction = 'GetInvoicePayer';
+        $downloadService = $this->getPostFinanceClient()
+            ->setUsername($secret['username'])
+            ->setPassword($secret['password'])
+            ->getClientFor($downloadAction);
 
         try {
 
@@ -101,25 +104,37 @@ class PostFinanceCommandController extends CommandController
             }
 
             $response = $client->$action(['eBillAccountID' => $secret['accountId'], 'ArchiveData' => false]);
-            $result = $action . 'Result';
-            foreach ($response->$result->InvoiceReport as $item) {
+            $resultProperty = $action . 'Result';
 
-                $fileExtension = strtolower($item->FileType);
+            foreach ($response->$resultProperty->InvoiceReport as $item) {
 
-                if ($fileExtension === 'pdf') {
+                $fileExtension = $item->FileType;
+
+                if ($fileExtension === 'RGXMLSIG') {
+
+                    // Download file via the web service.
+                    $downloadResponse = $downloadService->$downloadAction([
+                        'eBillAccountID' => $secret['accountId'],
+                        'BillerID' => $item->BillerID,
+                        'TransactionID' => $item->TransactionID,
+                        'FileType' => $item->FileType,
+                    ]);
+
+                    $downloadResultProperty = $downloadAction . 'Result';
+                    $downloadResult = $downloadResponse->$downloadResultProperty;
 
                     $fileNameAndPath = sprintf(
-                        '%s/%s.%s',
+                        '%s/%s',
                         $basePath,
-                        $item->TransactionID,
-                        $fileExtension
+                        $downloadResult->Filename
                     );
 
-                    file_put_contents($fileNameAndPath, 'asdf');
+                    file_put_contents($fileNameAndPath, $downloadResult->Data);
+                    break;
                 }
             }
 
-            $path = $basePath . '/*.pdf';
+            $path = $basePath . '/*.xml';
             $files = glob($path);
             $numberOfFiles = count($files);
 
