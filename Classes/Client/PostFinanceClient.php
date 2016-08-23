@@ -11,8 +11,6 @@ namespace Ecodev\PostfinanceService\Client;
 use SoapClient;
 use SoapHeader;
 use SoapVar;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Mvc\Controller\CommandController;
 
 /**
  * Class PostFinanceClient
@@ -36,14 +34,12 @@ class PostFinanceClient
     protected $wsdl = 'https://ebill-ki.postfinance.ch/B2BService/B2BService.svc?singleWsdl';
 
     /**
-     * @param string $username
-     * @param string $password
      * @param string $action
      * @return SoapClient
      */
     public function getClientFor($action) {
         $client = new SoapClient($this->wsdl, $this->getSoapHeaders());
-        $client->__setSoapHeaders($this->soapClientWSSecurityHeader($this->username, $this->password, $action));
+        $client->__setSoapHeaders($this->soapClientWSSecurityHeader($action));
         return $client;
     }
 
@@ -62,12 +58,10 @@ class PostFinanceClient
     /**
      * This function implements a WS-Security digest authentification for PHP.
      *
-     * @access private
-     * @param string $username
-     * @param string $password
+     * @param string $action
      * @return SoapHeader
      */
-    protected function soapClientWSSecurityHeader($username, $password, $action)
+    protected function soapClientWSSecurityHeader($action)
     {
 
         // Initializing namespaces
@@ -83,7 +77,7 @@ class PostFinanceClient
    <wsa:Action xmlns:wsa="http://www.w3.org/2005/08/addressing">http://ch.swisspost.ebill.b2bservice/B2BService/%s</wsa:Action>';
 
 
-        $authentication = sprintf($xml, $username, $password, $action);
+        $authentication = sprintf($xml, $this->username, $this->password, $action);
         $soapVariable = new SoapVar($authentication, XSD_ANYXML);
         return new SoapHeader($namespace, 'Security', $soapVariable , true);
     }
