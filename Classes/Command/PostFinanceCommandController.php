@@ -142,9 +142,9 @@ class PostFinanceCommandController extends CommandController
             $recipients = GeneralUtility::trimExplode(',', $notificationEmail, true);
             if ($recipients && $numberOfFiles > 0) {
 
-                $subject = sprintf('Nouveau lot de factures téléchargés (%s)', $numberOfFiles);
+                $subject = sprintf('Nouveau lot de factures téléchargées (%s)', $numberOfFiles);
                 $body = sprintf(
-                    "Nombre de factures téléchargés %s dans le dossier %s/ \n\n%s%s",
+                    "Nombre de factures téléchargées %s dans le dossier %s/ \n\n%s%s",
                     $numberOfFiles,
                     $basePath,
                     $files ? "\n    * " : '',
