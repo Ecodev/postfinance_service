@@ -76,8 +76,9 @@ class PostFinanceCommandController extends CommandController
      *
      * @param string $secretFile
      * @param string $notificationEmail
-     * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
      * @throws \InvalidArgumentException
+     * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
+     * @throws \Fab\Messenger\Exception\WrongPluginConfigurationException
      */
     public function downloadCommand($secretFile = '.secret/development', $notificationEmail = '')
     {
@@ -138,10 +139,9 @@ class PostFinanceCommandController extends CommandController
             $files = glob($path);
             $numberOfFiles = count($files);
 
-            if ($notificationEmail && $numberOfFiles > 0) {
 
-                /** @var Message $message */
-                $message = $this->objectManager->get(Message::class);
+            $recipients = GeneralUtility::trimExplode('/', $notificationEmail, true);
+            if ($recipients && $numberOfFiles > 0) {
 
                 $subject = sprintf('Nouveau lot de factures téléchargés (%s)', $numberOfFiles);
                 $body = sprintf(
@@ -149,15 +149,9 @@ class PostFinanceCommandController extends CommandController
                     $numberOfFiles,
                     $basePath
                 );
-
-                $message->setBody($body)
-                    ->setSubject($subject)
-                    ->setSender($this->getSender())
-                    ->parseToMarkdown(true)
-                    ->setTo([$notificationEmail => $notificationEmail]);
-
-                // Send message
-                $message->send();
+                foreach ($recipients as $recipient) {
+                    $this->sendNotification($subject, $body, $recipient);
+                }
             }
 
 
@@ -166,6 +160,30 @@ class PostFinanceCommandController extends CommandController
         }
     }
 
+    /**
+     * @param string $subject
+     * @param string $body
+     * @param string $recipient
+     * @return array
+     * @throws \InvalidArgumentException
+     * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
+     * @throws \Fab\Messenger\Exception\WrongPluginConfigurationException
+     */
+    protected function sendNotification($subject, $body, $recipient)
+    {
+
+        /** @var Message $message */
+        $message = $this->objectManager->get(Message::class);
+
+        $message->setBody($body)
+            ->setSubject($subject)
+            ->setSender($this->getSender())
+            ->parseToMarkdown(true)
+            ->setTo([$recipient => $recipient]);
+
+        // Send message
+        $message->send();
+    }
 
     /**
      * @return array
