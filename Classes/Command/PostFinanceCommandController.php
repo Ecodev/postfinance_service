@@ -107,44 +107,44 @@ class PostFinanceCommandController extends CommandController
             $response = $client->$action(['eBillAccountID' => $secret['accountId'], 'ArchiveData' => false]);
             $resultProperty = $action . 'Result';
 
+            $numberOfDownloadedFiles = 0;
             foreach ($response->$resultProperty->InvoiceReport as $item) {
 
+                $numberOfDownloadedFiles++;
                 $fileExtension = $item->FileType;
 
-                if ($fileExtension === 'RGXMLSIG') {
+                // Download file via the web service.
+                $downloadResponse = $downloadService->$downloadAction([
+                    'eBillAccountID' => $secret['accountId'],
+                    'BillerID' => $item->BillerID,
+                    'TransactionID' => $item->TransactionID,
+                    'FileType' => $item->FileType,
+                ]);
 
-                    // Download file via the web service.
-                    $downloadResponse = $downloadService->$downloadAction([
-                        'eBillAccountID' => $secret['accountId'],
-                        'BillerID' => $item->BillerID,
-                        'TransactionID' => $item->TransactionID,
-                        'FileType' => $item->FileType,
-                    ]);
+                $downloadResultProperty = $downloadAction . 'Result';
+                $downloadResult = $downloadResponse->$downloadResultProperty;
 
-                    $downloadResultProperty = $downloadAction . 'Result';
-                    $downloadResult = $downloadResponse->$downloadResultProperty;
+                $fileNameAndPath = sprintf(
+                    '%s/%s',
+                    $basePath,
+                    $downloadResult->Filename
+                );
 
-                    $fileNameAndPath = sprintf(
-                        '%s/%s',
-                        $basePath,
-                        $downloadResult->Filename
-                    );
-
-                    file_put_contents($fileNameAndPath, $downloadResult->Data);
-                    break;
-                }
+                file_put_contents($fileNameAndPath, $downloadResult->Data);
+                break;
             }
 
-            $path = $basePath . '/*.xml';
-            $files = glob($path);
-            $numberOfFiles = count($files);
-
             $recipients = GeneralUtility::trimExplode(',', $notificationEmail, true);
-            if ($recipients && $numberOfFiles > 0) {
+            if ($recipients && $numberOfDownloadedFiles > 0) {
 
-                $subject = sprintf('Nouveau lot de factures téléchargées (%s)', $numberOfFiles);
+                $path = $basePath . '/*';
+                $files = glob($path);
+                $numberOfFiles = count($files);
+
+                $subject = sprintf('Nouveau lot de e-factures (%s)', $numberOfDownloadedFiles);
                 $body = sprintf(
-                    "Nombre de factures téléchargées %s dans le dossier %s/ \n\n%s%s",
+                    "Nouvellement téléchargé %s. Nombre de factures %s, en attente de traitement dans le dossier %s/ \n\n%s%s",
+                    $numberOfDownloadedFiles,
                     $numberOfFiles,
                     $basePath,
                     $files ? "\n    * " : '',
