@@ -62,8 +62,8 @@ class PostFinanceCommandController extends CommandController
 
         try {
             $response = $client->$action(['eBillAccountID' => $secret['accountId'], 'ArchiveData' => false]);
-            $result = $action . 'Result';
-            foreach ($response->$result as $item) {
+            $resultProperty = $action . 'Result';
+            foreach ($response->$resultProperty as $item) {
                 print_r($item);
             }
         } catch (\RuntimeException $fault) {
@@ -105,13 +105,15 @@ class PostFinanceCommandController extends CommandController
             }
 
             $response = $client->$action(['eBillAccountID' => $secret['accountId'], 'ArchiveData' => false]);
+
+            // compute the result property
             $resultProperty = $action . 'Result';
+            $downloadResultProperty = $downloadAction . 'Result';
 
             $numberOfDownloadedFiles = 0;
             foreach ($response->$resultProperty->InvoiceReport as $item) {
 
                 $numberOfDownloadedFiles++;
-                $fileExtension = $item->FileType;
 
                 // Download file via the web service.
                 $downloadResponse = $downloadService->$downloadAction([
@@ -121,7 +123,7 @@ class PostFinanceCommandController extends CommandController
                     'FileType' => $item->FileType,
                 ]);
 
-                $downloadResultProperty = $downloadAction . 'Result';
+                // Get the result
                 $downloadResult = $downloadResponse->$downloadResultProperty;
 
                 $fileNameAndPath = sprintf(
