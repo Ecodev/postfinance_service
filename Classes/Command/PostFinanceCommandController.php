@@ -97,13 +97,6 @@ class PostFinanceCommandController extends CommandController
             ->setPassword($secret['password'])
             ->getClientFor($downloadAction);
 
-        // Test if we can write a file on the target, if not die right away.
-
-//        var_dump($secret['target']);
-//        exit();
-//        touch($secret['target']);
-//        exit();
-
         try {
 
             // Prepare variables
@@ -186,12 +179,14 @@ class PostFinanceCommandController extends CommandController
         }
 
         $testFile = $basePath . '/test.txt';
-
         try {
-            // try to create and delete file
             touch($testFile);
-            unlink($testFile);
         } catch (\Exception $e) {
+            // do not handle exception here.
+        }
+
+        // Test if we can write a file on the target, if not die right away.
+        if (!is_file($testFile)) {
 
             $subject = "Erreur e-factures: le dossier cible n'est pas atteignable";
             $body = sprintf(
@@ -204,6 +199,9 @@ class PostFinanceCommandController extends CommandController
             }
             $this->sendAndExit(1);
         }
+
+        // remove file.
+        unlink($testFile);
     }
 
     /**
