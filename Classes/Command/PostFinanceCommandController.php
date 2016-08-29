@@ -72,15 +72,16 @@ class PostFinanceCommandController extends CommandController
     }
 
     /**
-     * Download the list of invoices
+     * Download the list of invoices.
      *
      * @param string $secretFile
      * @param string $notificationEmail
+     * @param int $limit
      * @throws \InvalidArgumentException
      * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
      * @throws \Fab\Messenger\Exception\WrongPluginConfigurationException
      */
-    public function downloadCommand($secretFile = '.secret/development', $notificationEmail = '')
+    public function downloadCommand($secretFile = '.secret/development', $notificationEmail = '', $limit = 0)
     {
         $action = 'GetInvoiceListPayer';
 
@@ -96,13 +97,20 @@ class PostFinanceCommandController extends CommandController
             ->setPassword($secret['password'])
             ->getClientFor($downloadAction);
 
+        // Test if we can write a file on the target, if not die right away.
+
+//        var_dump($secret['target']);
+//        exit();
+//        touch($secret['target']);
+//        exit();
+
         try {
 
+            // Prepare variables
+            $recipients = GeneralUtility::trimExplode(',', $notificationEmail, true);
             $basePath = rtrim($secret['target'], '/');
-            // Make sure the file exist
-            if (!is_dir($basePath)) {
-                GeneralUtility::mkdir($secret['target']);
-            }
+
+            $this->prepareEnvironmentAndAlertIfProblem($basePath, $recipients);
 
             $response = $client->$action(['eBillAccountID' => $secret['accountId'], 'ArchiveData' => false]);
 
@@ -133,10 +141,12 @@ class PostFinanceCommandController extends CommandController
                 );
 
                 file_put_contents($fileNameAndPath, $downloadResult->Data);
-                break;
+
+                if ($limit && $numberOfDownloadedFiles >= $limit) {
+                    break;
+                }
             }
 
-            $recipients = GeneralUtility::trimExplode(',', $notificationEmail, true);
             if ($recipients && $numberOfDownloadedFiles > 0) {
 
                 $path = $basePath . '/*';
@@ -160,6 +170,39 @@ class PostFinanceCommandController extends CommandController
 
         } catch (\RuntimeException $fault) {
             $this->dying($fault, $client);
+        }
+    }
+
+    /**
+     * @param string $basePath
+     * @param array $recipients
+     * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
+     */
+    protected function prepareEnvironmentAndAlertIfProblem($basePath, array $recipients)
+    {
+        // Make sure the file exist
+        if (!is_dir($basePath)) {
+            GeneralUtility::mkdir($basePath);
+        }
+
+        $testFile = $basePath . '/test.txt';
+
+        try {
+            // try to create and delete file
+            touch($testFile);
+            unlink($testFile);
+        } catch (\Exception $e) {
+
+            $subject = "Erreur e-factures: le dossier cible n'est pas atteignable";
+            $body = sprintf(
+                "Le dossier cible %s n'est pas disponible en écriture. Vérifier qu'il est correctement monté.\n\nAucune e-facture n'a été téléchargée. ",
+                $testFile
+            );
+
+            foreach ($recipients as $recipient) {
+                $this->sendNotification($subject, $body, $recipient);
+            }
+            $this->sendAndExit(1);
         }
     }
 
