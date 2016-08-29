@@ -190,7 +190,7 @@ class PostFinanceCommandController extends CommandController
 
             $subject = "Erreur e-factures: le dossier cible n'est pas atteignable";
             $body = sprintf(
-                "Le dossier cible %s n'est pas disponible en écriture. Vérifier qu'il est correctement monté.\n\nAucune e-facture n'a été téléchargée. ",
+                "Le dossier cible %s n'est pas disponible en écriture, vérifiez qu'il est correctement monté.\n\nAucune e-facture n'a été téléchargée. ",
                 $testFile
             );
 
