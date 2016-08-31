@@ -1,18 +1,19 @@
 # Postfinance web service consumer
 
-TYPO3 extension to consume web service (SOAP) of Postfinance. 
+TYPO3 extension to consume web service (SOAP) of Postfinance.
 
 Usage
 =====
-    
+
     # Check the service is alive
-    ./typo3cms postfinance:ping
-    
+    ./typo3cms postfinance:ping  --secret-file=.secret/development
+
     # List invoices
-    ./typo3cms postfinance:list
-    
+    ./typo3cms postfinance:list --secret-file=.secret/development
+
     # Download invoices
     ./typo3cms postfinance:download --notification-email=fabien@udriot.net
+    ./typo3cms postfinance:download  --secret-file=.secret/development --notification-email=email@test.com --limit=10
 
 
 Installation
@@ -30,7 +31,7 @@ Installation
     password=bar
     accountId=123456
     target=e-bills
-    
+
 * Make sure the scheduler is well configured
 * Set up the "ping" task in the BE as test
 * Set up the "download" task in the BE
