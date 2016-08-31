@@ -31,7 +31,7 @@ class PostFinanceClient
     /**
      * @var string
      */
-    protected $wsdl = 'https://ebill-ki.postfinance.ch/B2BService/B2BService.svc?singleWsdl';
+    protected $wsdl = '';
 
     /**
      * @param string $action
@@ -99,6 +99,16 @@ class PostFinanceClient
     public function setPassword($password)
     {
         $this->password = $password;
+        return $this;
+    }
+
+    /**
+     * @param string $wsdl
+     * @return $this
+     */
+    public function setWsdl($wsdl)
+    {
+        $this->wsdl = $wsdl;
         return $this;
     }
 

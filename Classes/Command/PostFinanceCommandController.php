@@ -25,7 +25,7 @@ class PostFinanceCommandController extends CommandController
      * @param string $secretFile
      * @throws \InvalidArgumentException
      */
-    public function pingCommand($secretFile = '.secret/development')
+    public function pingCommand($secretFile)
     {
         $action = 'ExecutePing';
 
@@ -33,6 +33,7 @@ class PostFinanceCommandController extends CommandController
         $client = $this->getPostFinanceClient()
             ->setUsername($secret['username'])
             ->setPassword($secret['password'])
+            ->setWsdl($secret['wsdl'])
             ->getClientFor($action);
 
         try {
@@ -50,7 +51,7 @@ class PostFinanceCommandController extends CommandController
      * @param string $secretFile
      * @throws \InvalidArgumentException
      */
-    public function listCommand($secretFile = '.secret/development')
+    public function listCommand($secretFile)
     {
         $action = 'GetInvoiceListPayer';
 
@@ -58,6 +59,7 @@ class PostFinanceCommandController extends CommandController
         $client = $this->getPostFinanceClient()
             ->setUsername($secret['username'])
             ->setPassword($secret['password'])
+            ->setWsdl($secret['wsdl'])
             ->getClientFor($action);
 
         try {
@@ -81,7 +83,7 @@ class PostFinanceCommandController extends CommandController
      * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
      * @throws \Fab\Messenger\Exception\WrongPluginConfigurationException
      */
-    public function downloadCommand($secretFile = '.secret/development', $notificationEmail = '', $limit = 0)
+    public function downloadCommand($secretFile, $notificationEmail = '', $limit = 0)
     {
         $action = 'GetInvoiceListPayer';
 
@@ -89,12 +91,14 @@ class PostFinanceCommandController extends CommandController
         $client = $this->getPostFinanceClient()
             ->setUsername($secret['username'])
             ->setPassword($secret['password'])
+            ->setWsdl($secret['wsdl'])
             ->getClientFor($action);
 
         $downloadAction = 'GetInvoicePayer';
         $downloadService = $this->getPostFinanceClient()
             ->setUsername($secret['username'])
             ->setPassword($secret['password'])
+            ->setWsdl($secret['wsdl'])
             ->getClientFor($downloadAction);
 
         try {
@@ -146,9 +150,13 @@ class PostFinanceCommandController extends CommandController
                 $files = glob($path);
                 $numberOfFiles = count($files);
 
-                $subject = sprintf('Nouveau lot de e-factures (%s)', $numberOfDownloadedFiles);
+                $subject = sprintf(
+                    'Nouveau lot de e-factures - %s fichier%s',
+                    $numberOfDownloadedFiles,
+                    $numberOfDownloadedFiles > 1 ? 's' : ''
+                );
                 $body = sprintf(
-                    "Nouvellement téléchargé %s. Nombre de factures %s, en attente de traitement dans le dossier %s/ \n\n%s%s",
+                    "Nouvellement téléchargé %s. Nombre de fichiers %s, en attente de traitement dans le dossier %s/ \n\n%s%s",
                     $numberOfDownloadedFiles,
                     $numberOfFiles,
                     $basePath,
