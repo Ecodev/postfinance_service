@@ -12,7 +12,6 @@ Usage
     ./typo3cms postfinance:list --secret-file=.secret/development
 
     # Download invoices
-    ./typo3cms postfinance:download --notification-email=fabien@udriot.net
     ./typo3cms postfinance:download  --secret-file=.secret/development --notification-email=email@test.com --limit=10
 
 

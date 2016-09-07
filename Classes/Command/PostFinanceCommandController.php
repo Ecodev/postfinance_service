@@ -115,56 +115,59 @@ class PostFinanceCommandController extends CommandController
             $resultProperty = $action . 'Result';
             $downloadResultProperty = $downloadAction . 'Result';
 
-            $numberOfDownloadedFiles = 0;
-            foreach ($response->$resultProperty->InvoiceReport as $item) {
+            if ($response->$resultProperty->InvoiceReport) {
 
-                $numberOfDownloadedFiles++;
+                $numberOfDownloadedFiles = 0;
+                foreach ($response->$resultProperty->InvoiceReport as $item) {
 
-                // Download file via the web service.
-                $downloadResponse = $downloadService->$downloadAction([
-                    'eBillAccountID' => $secret['accountId'],
-                    'BillerID' => $item->BillerID,
-                    'TransactionID' => $item->TransactionID,
-                    'FileType' => $item->FileType,
-                ]);
+                    $numberOfDownloadedFiles++;
 
-                // Get the result
-                $downloadResult = $downloadResponse->$downloadResultProperty;
+                    // Download file via the web service.
+                    $downloadResponse = $downloadService->$downloadAction([
+                        'eBillAccountID' => $secret['accountId'],
+                        'BillerID' => $item->BillerID,
+                        'TransactionID' => $item->TransactionID,
+                        'FileType' => $item->FileType,
+                    ]);
 
-                $fileNameAndPath = sprintf(
-                    '%s/%s',
-                    $basePath,
-                    $downloadResult->Filename
-                );
+                    // Get the result
+                    $downloadResult = $downloadResponse->$downloadResultProperty;
 
-                file_put_contents($fileNameAndPath, $downloadResult->Data);
+                    $fileNameAndPath = sprintf(
+                        '%s/%s',
+                        $basePath,
+                        $downloadResult->Filename
+                    );
 
-                if ($limit && $numberOfDownloadedFiles >= $limit) {
-                    break;
+                    file_put_contents($fileNameAndPath, $downloadResult->Data);
+
+                    if ($limit && $numberOfDownloadedFiles >= $limit) {
+                        break;
+                    }
                 }
-            }
 
-            if ($recipients && $numberOfDownloadedFiles > 0) {
+                if ($recipients && $numberOfDownloadedFiles > 0) {
 
-                $path = $basePath . '/*';
-                $files = glob($path);
-                $numberOfFiles = count($files);
+                    $path = $basePath . '/*';
+                    $files = glob($path);
+                    $numberOfFiles = count($files);
 
-                $subject = sprintf(
-                    'Nouveau lot de e-factures - %s fichier%s',
-                    $numberOfDownloadedFiles,
-                    $numberOfDownloadedFiles > 1 ? 's' : ''
-                );
-                $body = sprintf(
-                    "Nouvellement téléchargé %s. Nombre de fichiers %s, en attente de traitement dans le dossier %s/ \n\n%s%s",
-                    $numberOfDownloadedFiles,
-                    $numberOfFiles,
-                    $basePath,
-                    $files ? "\n    * " : '',
-                    implode("\n    * ", $files)
-                );
-                foreach ($recipients as $recipient) {
-                    $this->sendNotification($subject, $body, $recipient);
+                    $subject = sprintf(
+                        'Nouveau lot de e-factures - %s fichier%s',
+                        $numberOfDownloadedFiles,
+                        $numberOfDownloadedFiles > 1 ? 's' : ''
+                    );
+                    $body = sprintf(
+                        "Nouvellement téléchargé %s. Nombre de fichiers %s, en attente de traitement dans le dossier %s/ \n\n%s%s",
+                        $numberOfDownloadedFiles,
+                        $numberOfFiles,
+                        $basePath,
+                        $files ? "\n    * " : '',
+                        implode("\n    * ", $files)
+                    );
+                    foreach ($recipients as $recipient) {
+                        $this->sendNotification($subject, $body, $recipient);
+                    }
                 }
             }
 
@@ -178,6 +181,7 @@ class PostFinanceCommandController extends CommandController
      * @param string $basePath
      * @param array $recipients
      * @throws \Fab\Messenger\Exception\InvalidEmailFormatException
+     * @throws \Fab\Messenger\Exception\WrongPluginConfigurationException
      */
     protected function prepareEnvironmentAndAlertIfProblem($basePath, array $recipients)
     {
@@ -205,6 +209,7 @@ class PostFinanceCommandController extends CommandController
             foreach ($recipients as $recipient) {
                 $this->sendNotification($subject, $body, $recipient);
             }
+            $this->outputLine($body);
             $this->sendAndExit(1);
         }
 
