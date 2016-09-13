@@ -14,6 +14,9 @@ Usage
     # Download invoices
     ./typo3cms postfinance:download  --secret-file=.secret/development --notification-email=email@test.com --limit=10
 
+    # Check that we do not have zombie tasks
+    ./typo3cms task:supervise  --notification-email=email@test.com
+
 
 Installation
 ============
