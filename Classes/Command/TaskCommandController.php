@@ -44,7 +44,7 @@ class TaskCommandController extends CommandController
 
             $subject = 'Problème e-factures: certaines tâches sont restées suspendues';
             $body = sprintf(
-                "Veuillez contrôller les tâches avec les identifiants %s",
+                "Veuillez contrôler les tâches avec les identifiants %s",
                 implode(', ', $faultyTaskIdentifiers)
             );
 
